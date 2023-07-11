@@ -1,4 +1,4 @@
-const UserSchema = require("../models/User");
+const User = require("../models/User");
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
@@ -25,24 +25,22 @@ router.post("/user-post", async (req, res) => {
 
 // Login doğrulama işlemi
 router.post("/login", async (req, res) => {
-    try {
-      const user = await UserSchema.findOne({ email: req.body.email });
-      if (!user) {
-        return res.status(400).json("User not found");
-      }
-  
-      const validPassword = await bcrypt.compare(
-        req.body.password,
-        user.password
-      );
-      if (!validPassword) {
-        res.status(403).json("Invalid password");
-      } else {
-        res.status(200).json(user);
-      }
-    } catch (error) {
-      res.status(400).json(error);
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(400).json({ status: "error", message: "User not found" });
     }
-  });
+
+    const validPassword = await bcrypt.compare(req.body.password, user.password);
+    if (!validPassword) {
+      return res.status(403).json({ status: "error", message: "Invalid password" });
+    }
+
+    res.status(200).json({ status: "success", user });
+  } catch (error) {
+    res.status(400).json({ status: "error", message: error.message });
+  }
+});
+
 
 module.exports = router;
