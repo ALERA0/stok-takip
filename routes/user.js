@@ -28,12 +28,12 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-      return res.status(400).json({ status: "error", message: "User not found" });
+      return res.status(401).json({ status: "error", message: "Şifre ya da E-Mail bilgileri yanlış" });
     }
 
     const validPassword = await bcrypt.compare(req.body.password, user.password);
     if (!validPassword) {
-      return res.status(403).json({ status: "error", message: "Invalid password" });
+      return res.status(403).json({ status: "error", message: "Şifre ya da E-Mail bilgileri yanlış" });
     }
 
     res.status(200).json({ status: "success", user });
