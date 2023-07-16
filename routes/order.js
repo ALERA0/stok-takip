@@ -37,15 +37,6 @@ router.post("/get-order", upload.none(),async (req, res) => {
   }
 });
 
-// Belli bir cariyi id'ye göre getiren endpoint
-router.post("/get-order", upload.none(),async (req, res) => {
-  try {
-    const { _id } = req.body;
-    const order = await Order.findById(_id);
-    res.status(200).json({ status: "success", order });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: error });
-  }
-});
+
 
 module.exports = router;
