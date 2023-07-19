@@ -4,9 +4,11 @@ const router = express.Router();
 const multer = require("multer");
 const upload = multer();
 
-router.post("/newproduct", upload.none(), async (req, res) => {
+//Yeni bir
+router.post("/newOrder", upload.none(), async (req, res) => {
   try {
     const order = new Order(req.body);
+
     const savedOrder = await order.save();
     res
       .status(201)
@@ -17,7 +19,7 @@ router.post("/newproduct", upload.none(), async (req, res) => {
 });
 
 //Bütün carileri getiren endpoint
-router.get("/get-all-orders", async (req, res) => {
+router.get("/getlAllOrders", async (req, res) => {
   try {
     const orders = await Order.find();
     res.status(200).json({ status: "success", orders });
@@ -27,7 +29,7 @@ router.get("/get-all-orders", async (req, res) => {
 });
 
 // Belli bir cariyi id'ye göre getiren endpoint
-router.post("/get-order", upload.none(),async (req, res) => {
+router.post("/orderDetail", upload.none(), async (req, res) => {
   try {
     const { _id } = req.body;
     const order = await Order.findById(_id);
@@ -37,6 +39,33 @@ router.post("/get-order", upload.none(),async (req, res) => {
   }
 });
 
+//Cari güncelleyen enpoint
+router.post("/updateOrder", upload.none(), async (req, res) => {
+  const updateData = req.body;
+  try {
+    const updateOrder = await Order.findByIdAndUpdate(
+      updateData._id,
+      updateData,
+      { new: true }
+    );
+    res.status(200).json({
+      status: "success",
+      message: "Cari başarıyla güncellendi.",
+      updateOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error });
+  }
+});
 
+router.post("/deleteOrder", upload.none(), async (req, res) => {
+  try {
+    const { _id } = req.body;
+    const order = await Order.findByIdAndDelete(_id);
+    res.status(200).json({ status: "success", message: "Cari silindi." });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error });
+  }
+});
 
 module.exports = router;

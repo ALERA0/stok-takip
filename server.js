@@ -19,12 +19,13 @@ const connect = async () => {
 const userRouter = require("./routes/user.js");
 const orderRouter = require("./routes/order.js");
 const productRouter = require("./routes/product.js");
+const incomingProducts = require("./routes/incomingProduct.js");
 
 app.use(logger("dev"));
 app.use(express.json());
 app.use(cors());
 
-app.use("/api", userRouter, orderRouter, productRouter);
+app.use("/api", userRouter, orderRouter, productRouter,incomingProducts);
 
 app.listen(port, () => {
   connect();
