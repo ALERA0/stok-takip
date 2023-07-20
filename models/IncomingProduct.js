@@ -15,7 +15,7 @@ const IncomingProductSchema = new mongoose.Schema({
         ref: "Product",
         require: false,
       },
-      quantity: { type: Number, required: false },
+      quantity: { type: Number, required: true, default: 0 },
     },
   ],
 });
