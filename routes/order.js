@@ -68,4 +68,34 @@ router.post("/deleteOrder", upload.none(), async (req, res) => {
   }
 });
 
+router.get("/getTedarikciOrders", async (req, res) => {
+  try {
+    const orders = await Order.find({ ozellik: "Tedarikçi" });
+    res
+      .status(200)
+      .json({
+        status: "success",
+        message: "Tedarikçiler Başarıyla getirildi.",
+        orders,
+      });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error });
+  }
+});
+
+router.get("/getMusteriOrders", async (req, res) => {
+  try {
+    const orders = await Order.find({ ozellik: "Müşteri" });
+    res
+      .status(200)
+      .json({
+        status: "success",
+        message: "Müşteriler Başarıyla getirildi.",
+        orders,
+      });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error });
+  }
+});
+
 module.exports = router;

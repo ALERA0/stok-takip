@@ -8,7 +8,6 @@ const upload = multer();
 const mongoose = require("mongoose");
 app.use(express.json());
 
-
 //Yeni bir gelen ürün ekleyen endpoint
 router.post("/addIncomingProduct", upload.none(), async (req, res) => {
   try {
@@ -53,10 +52,7 @@ router.post("/addIncomingProduct", upload.none(), async (req, res) => {
   }
 });
 
-
-
-
-
+// Girilen ürünleri güncelleme
 router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
   try {
     const { _id, documentDate, documentNumber, order, description, products } =
@@ -130,8 +126,7 @@ router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
   }
 });
 
-
-
+//Girilen ürünler datasında bir ürün silme
 router.post("/removeProduct", upload.none(), async (req, res) => {
   try {
     const { _id, productIdToRemove } = req.body;
@@ -151,7 +146,7 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
       throw new Error("Çıkarılacak ürün listede bulunamadı");
     }
 
-    const { quantity: removedQuantity } = productToRemove;
+    const removedQuantity = productToRemove.quantity;
 
     // Ürünleri productId değerine göre filtrele ve productIdToRemove değerine sahip olanı çıkart
     incomingProduct.products = incomingProduct.products.filter(
@@ -163,6 +158,8 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
     if (foundProduct) {
       foundProduct.productQuantity -= removedQuantity;
       await foundProduct.save();
+    } else {
+      throw new Error("Çıkarılacak ürünün veritabanında kaydı bulunamadı");
     }
 
     // incomingProduct'i güncelle
@@ -178,20 +175,19 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+router.get("/getIncomingProducts", upload.none(), async (req, res) => {
+  try {
+    const incomingProducts = await IncomingProduct.find();
+    res
+      .status(200)
+      .json({
+        status: "succes",
+        message: "Ürün girişleri listelendi.",
+        incomingProducts,
+      });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
 
 module.exports = router;
