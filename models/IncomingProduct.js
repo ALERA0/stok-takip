@@ -1,24 +1,32 @@
 const mongoose = require("mongoose");
 
-const IncomingProductSchema = new mongoose.Schema({
-  documentDate: {
-    type: Date,
-    default: Date.now,
-  },
-  documentNumber: { type: String, required: true },
-  order: { type: mongoose.Schema.Types.ObjectId, ref: "Order", require: false },
-  description: { type: String, required: false },
-  products: [
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-        require: false,
-      },
-      quantity: { type: Number, required: true, default: 0 },
+const IncomingProductSchema = new mongoose.Schema(
+  {
+    documentDate: {
+      type: Date,
+      default: Date.now,
     },
-  ],
-});
+    documentNumber: { type: String, required: true },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      require: false,
+    },
+    ozellik: { type: Number, default: 1 },
+    description: { type: String, required: false },
+    products: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          require: false,
+        },
+        quantity: { type: Number, required: true, default: 0 },
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
 // Tarih alanını yyyy-mm-dd formatına dönüştürme
 IncomingProductSchema.set("toJSON", {

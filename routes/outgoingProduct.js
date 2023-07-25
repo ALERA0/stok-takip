@@ -194,15 +194,17 @@ router.get("/getOutgoingProducts",  async (req, res) => {
 
 
 //Bütün belgeleri getir
+
 router.get("/allDocuments", async (req, res) => {
   try {
     const incomingProducts = await IncomingProduct.find();
     const outgoingProducts = await OutgoingProduct.find();
 
-    const allProducts = {
-      incomingProducts,
-      outgoingProducts,
-    };
+    // Tüm belgeleri bir dizi olarak birleştirme
+    const data = [...incomingProducts, ...outgoingProducts];
+
+    // updatedAt alanına göre en güncelden eskiye sıralama
+    data.sort((a, b) => b.updatedAt - a.updatedAt);
 
     res.status(200).json({
       status: "success",
