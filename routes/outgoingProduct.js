@@ -209,7 +209,7 @@ router.get("/allDocuments", async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Tüm belgeler listelendi",
-      allProducts,
+      data,
     });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
