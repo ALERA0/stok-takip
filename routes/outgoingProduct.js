@@ -9,46 +9,125 @@ const upload = multer();
 const mongoose = require("mongoose");
 app.use(express.json());
 
-// ... Diğer endpointleriniz ...
-
 // Çıkan ürünleri ekleme
 router.post("/addOutgoingProduct", upload.none(), async (req, res) => {
   try {
-    const { documentDate, documentNumber, order, description, products } =
-      req.body;
-    const outgoingProduct = new OutgoingProduct({
+    const { documentDate, documentNumber, order, description } = req.body;
+    const data = new OutgoingProduct({
       documentDate,
       documentNumber,
       order,
       description,
-      products: [],
+      products: [], // Ürünleri buraya tek tek eklemeyeceğiz, başka bir endpoint ile yapacağız
     });
 
-    for (const product of products) {
-      const { productId, productQuantity } = product;
-      const foundProduct = await Product.findById(productId);
-
-      if (!foundProduct) {
-        throw new Error("Ürün bulunamadı");
-      }
-
-      // Product modelindeki quantity değerini güncelle
-      foundProduct.productQuantity -= parseInt(productQuantity, 10);
-      await foundProduct.save();
-
-      // Add product and quantity to outgoingProducts array
-      outgoingProduct.products.push({
-        product: foundProduct._id,
-        quantity: parseInt(productQuantity, 10),
-      });
-    }
-
-    await outgoingProduct.save();
+    await data.save();
 
     res.status(200).json({
       status: "success",
-      message: "Çıkan ürün girişi başarıyla gerçekleştirildi.",
-      outgoingProduct,
+      message: "Ürün girişi başarıyla oluşturuldu.",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+router.post("/addProductToOutgoingProduct", upload.none(), async (req, res) => {
+  try {
+    const { outgoingProductId, productId, productQuantity } = req.body;
+
+    const data = await OutgoingProduct.findById(outgoingProductId);
+    if (!data) {
+      throw new Error("Giriş belgesi bulunamadı");
+    }
+
+    const foundProduct = await Product.findById(productId);
+    if (!foundProduct) {
+      throw new Error("Ürün bulunamadı");
+    }
+
+    const parsedQuantity = parseInt(productQuantity, 10);
+    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+      throw new Error("Geçerli bir ürün miktarı girin");
+    }
+
+    if (parsedQuantity > foundProduct.productQuantity) {
+      return res.status(400).json({
+        status: "error",
+        message: "Stokta yeterli ürün sayısı yok",
+        availableQuantity: foundProduct.productQuantity,
+      });
+    }
+
+    // Product modelindeki quantity değerini güncelle
+    foundProduct.productQuantity -= parseInt(productQuantity, 10);
+    await foundProduct.save();
+
+    // Add product and quantity to incomingProducts array
+    data.products.push({
+      product: foundProduct._id,
+      quantity: parseInt(productQuantity, 10),
+    });
+
+    await data.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Ürün girişi başarıyla gerçekleştirildi.",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+router.post("/updateOutgoingProductQuantity", upload.none(), async (req, res) => {
+  try {
+    const { outgoingProductId, rowId, newQuantity } = req.body;
+
+    const data = await OutgoingProduct.findById(outgoingProductId);
+    if (!data) {
+      throw new Error("Güncellenecek ürün çıkışı bulunamadı");
+    }
+
+    const existingProduct = data.products.find(
+      (item) => item._id.toString() === rowId
+    );
+    if (!existingProduct) {
+      throw new Error("Ürün çıkışı bulunamadı");
+    }
+
+    const parsedNewQuantity = parseInt(newQuantity, 10);
+    if (isNaN(parsedNewQuantity) || parsedNewQuantity <= 0) {
+      throw new Error("Yeni quantity değeri geçerli bir sayı değil");
+    }
+
+    // Eski quantity değerini bulup, farkını hesapla
+    const diffQuantity = parsedNewQuantity - existingProduct.quantity;
+
+    // OutgoingProduct modelindeki quantity değerini güncelle
+    existingProduct.quantity = parsedNewQuantity;
+
+    // Product modelindeki quantity değerini güncelle
+    const foundProduct = await Product.findById(existingProduct.product);
+    if (!foundProduct) {
+      throw new Error("Ürün bulunamadı");
+    }
+
+    // Stok miktarını azalt
+    if (foundProduct.productQuantity < diffQuantity) {
+      throw new Error("Stokta yeterli ürün yok");
+    }
+    foundProduct.productQuantity -= diffQuantity;
+    await foundProduct.save();
+
+    await data.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Ürün çıkışı başarıyla güncellendi.",
+      data,
     });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
@@ -179,7 +258,7 @@ router.post("/removeOutgoingProduct", upload.none(), async (req, res) => {
 });
 
 // Çıkan ürünleri getirme
-router.get("/getOutgoingProducts",  async (req, res) => {
+router.get("/getOutgoingProducts", async (req, res) => {
   try {
     const outgoingProducts = await OutgoingProduct.find();
     res.status(200).json({
@@ -191,7 +270,6 @@ router.get("/getOutgoingProducts",  async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
-
 
 //Bütün belgeleri getir
 
@@ -215,19 +293,19 @@ router.get("/allDocuments", async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
- 
-// Tedarikçi ya da müşteriye ait tüm geçmiş işlemleri getir 
+
+// Tedarikçi ya da müşteriye ait tüm geçmiş işlemleri getir
 router.post("/listTransactions", upload.none(), async (req, res) => {
   try {
     const { _id } = req.body;
-    
+
     // Tedarikçiye bağlı işlemleri çek
-    const incomingTransactions = await IncomingProduct.find({ "order": _id })
+    const incomingTransactions = await IncomingProduct.find({ order: _id })
       .populate("order")
       .populate("products.product");
 
     // Müşteriye bağlı işlemleri çek
-    const outgoingTransactions = await OutgoingProduct.find({ "order": _id })
+    const outgoingTransactions = await OutgoingProduct.find({ order: _id })
       .populate("order")
       .populate("products.product");
 
@@ -242,6 +320,22 @@ router.post("/listTransactions", upload.none(), async (req, res) => {
   }
 });
 
-
+//Ürün çıkış belgesi detay
+router.post("/outgoingProductdetail", upload.none(), async (req, res) => {
+  try {
+    const { outgoingProductId } = req.body;
+    const data = await OutgoingProduct.findById(outgoingProductId);
+    if (!data) {
+      throw new Error("Ürün çıkışı bulunamadı");
+    }
+    res.status(200).json({
+      status: "success",
+      message: "Ürün çıkış belgesi detayı başarıyla getirildi",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
 
 module.exports = router;

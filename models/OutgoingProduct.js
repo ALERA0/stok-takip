@@ -36,9 +36,9 @@ OutcomingProductSchema.set("toJSON", {
   },
 });
 
-const OutcomingProduct = mongoose.model(
+const OutgoingProduct = mongoose.model(
   "OutcomingProduct",
   OutcomingProductSchema
 );
 
-module.exports = OutcomingProduct;
+module.exports = OutgoingProduct;
