@@ -278,9 +278,9 @@ router.post("/removeOutgoingProduct", upload.none(), async (req, res) => {
 // Çıkan ürünleri getirme
 router.get("/getOutgoingProducts", async (req, res) => {
   try {
-    const outgoingProducts = await OutgoingProduct.find();
+    const outgoingProducts = await OutgoingProduct.find().populate("order", "_id isim");
     res.status(200).json({
-      status: "succes",
+      status: "success",
       message: "Çıkan ürün girişleri listelendi.",
       outgoingProducts,
     });
@@ -292,8 +292,8 @@ router.get("/getOutgoingProducts", async (req, res) => {
 //Bütün belgeleri getir
 router.get("/allDocuments", async (req, res) => {
   try {
-    const incomingProducts = await IncomingProduct.find();
-    const outgoingProducts = await OutgoingProduct.find();
+    const incomingProducts = await IncomingProduct.find().populate("order", "_id isim");
+    const outgoingProducts = await OutgoingProduct.find().populate("order", "_id isim");
 
     // Tüm belgeleri bir dizi olarak birleştirme
     const data = [...incomingProducts, ...outgoingProducts];

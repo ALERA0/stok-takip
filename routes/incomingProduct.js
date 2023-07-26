@@ -252,9 +252,9 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
 // Ürün giriş belgelerini getirme
 router.get("/getIncomingProducts", upload.none(), async (req, res) => {
   try {
-    const incomingProducts = await IncomingProduct.find();
+    const incomingProducts = await IncomingProduct.find().populate("order", "_id isim");
     res.status(200).json({
-      status: "succes",
+      status: "success",
       message: "Ürün girişleri listelendi.",
       incomingProducts,
     });
