@@ -84,73 +84,77 @@ router.post("/addProductToOutgoingProduct", upload.none(), async (req, res) => {
 });
 
 //Ürün çıkış belgesine eklenen ürünleri update etme
-router.post("/updateOutgoingProductQuantity", upload.none(), async (req, res) => {
-  try {
-    const { outgoingProductId, rowId, newQuantity } = req.body;
+router.post(
+  "/updateOutgoingProductQuantity",
+  upload.none(),
+  async (req, res) => {
+    try {
+      const { outgoingProductId, rowId, newQuantity } = req.body;
 
-    const data = await OutgoingProduct.findById(outgoingProductId);
-    if (!data) {
-      throw new Error("Güncellenecek ürün çıkışı bulunamadı");
-    }
-
-    const existingProduct = data.products.find(
-      (item) => item._id.toString() === rowId
-    );
-    if (!existingProduct) {
-      throw new Error("Ürün çıkışı bulunamadı");
-    }
-
-    const parsedNewQuantity = parseInt(newQuantity, 10);
-    if (isNaN(parsedNewQuantity) || parsedNewQuantity < 0) {
-      throw new Error("Yeni quantity değeri geçerli bir sayı değil");
-    }
-
-    // Eski miktarı da güncelle
-    const oldQuantity = existingProduct.quantity;
-
-    // Mevcut çıkış miktarını hesapla
-    const currentQuantity = data.products.reduce((total, item) => {
-      if (item._id.toString() === rowId) {
-        return total;
+      const data = await OutgoingProduct.findById(outgoingProductId);
+      if (!data) {
+        throw new Error("Güncellenecek ürün çıkışı bulunamadı");
       }
-      return total + item.quantity;
-    }, 0);
 
-    // Toplam çıkış miktarını bul
-    const totalQuantity = currentQuantity + parsedNewQuantity - oldQuantity;
+      const existingProduct = data.products.find(
+        (item) => item._id.toString() === rowId
+      );
+      if (!existingProduct) {
+        throw new Error("Ürün çıkışı bulunamadı");
+      }
 
-    // Product modelindeki stok miktarını kontrol et
-    const foundProduct = await Product.findById(existingProduct.product);
-    if (!foundProduct) {
-      throw new Error("Ürün bulunamadı");
+      const parsedNewQuantity = parseInt(newQuantity, 10);
+      if (isNaN(parsedNewQuantity) || parsedNewQuantity < 0) {
+        throw new Error("Yeni quantity değeri geçerli bir sayı değil");
+      }
+
+      // Eski miktarı da güncelle
+      const oldQuantity = existingProduct.quantity;
+
+      // Mevcut çıkış miktarını hesapla
+      const currentQuantity = data.products.reduce((total, item) => {
+        if (item._id.toString() === rowId) {
+          return total;
+        }
+        return total + item.quantity;
+      }, 0);
+
+      // Toplam çıkış miktarını bul
+      const totalQuantity = currentQuantity + parsedNewQuantity - oldQuantity;
+
+      // Product modelindeki stok miktarını kontrol et
+      const foundProduct = await Product.findById(existingProduct.product);
+      if (!foundProduct) {
+        throw new Error("Ürün bulunamadı");
+      }
+
+      // Stok miktarı sıfırdan küçük olmamalı ve stok adedini aşmamalı
+      if (
+        foundProduct.productQuantity - totalQuantity < 0 ||
+        foundProduct.productQuantity < totalQuantity
+      ) {
+        throw new Error("Stokta yeterli ürün yok");
+      }
+
+      // Eski quantity değerini güncelle
+      existingProduct.quantity = parsedNewQuantity;
+
+      // Product modelindeki quantity değerini güncelle
+      foundProduct.productQuantity += oldQuantity - parsedNewQuantity;
+      await foundProduct.save();
+
+      await data.save();
+
+      res.status(200).json({
+        status: "success",
+        message: "Ürün çıkışı başarıyla güncellendi.",
+        data,
+      });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
     }
-
-    // Stok miktarı sıfırdan küçük olmamalı ve stok adedini aşmamalı
-    if (foundProduct.productQuantity - totalQuantity < 0 || foundProduct.productQuantity < totalQuantity) {
-      throw new Error("Stokta yeterli ürün yok");
-    }
-
-    // Eski quantity değerini güncelle
-    existingProduct.quantity = parsedNewQuantity;
-
-    // Product modelindeki quantity değerini güncelle
-    foundProduct.productQuantity += oldQuantity - parsedNewQuantity;
-    await foundProduct.save();
-
-    await data.save();
-
-    res.status(200).json({
-      status: "success",
-      message: "Ürün çıkışı başarıyla güncellendi.",
-      data,
-    });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: error.message });
   }
-});
-
-
-
+);
 
 // Çıkan ürünleri güncelleme
 router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
@@ -278,7 +282,10 @@ router.post("/removeOutgoingProduct", upload.none(), async (req, res) => {
 // Çıkan ürünleri getirme
 router.get("/getOutgoingProducts", async (req, res) => {
   try {
-    const outgoingProducts = await OutgoingProduct.find().populate("order", "_id isim");
+    const outgoingProducts = await OutgoingProduct.find().populate(
+      "order",
+      "_id isim"
+    );
     res.status(200).json({
       status: "success",
       message: "Çıkan ürün girişleri listelendi.",
@@ -292,8 +299,14 @@ router.get("/getOutgoingProducts", async (req, res) => {
 //Bütün belgeleri getir
 router.get("/allDocuments", async (req, res) => {
   try {
-    const incomingProducts = await IncomingProduct.find().populate("order", "_id isim");
-    const outgoingProducts = await OutgoingProduct.find().populate("order", "_id isim");
+    const incomingProducts = await IncomingProduct.find().populate(
+      "order",
+      "_id isim"
+    );
+    const outgoingProducts = await OutgoingProduct.find().populate(
+      "order",
+      "_id isim"
+    );
 
     // Tüm belgeleri bir dizi olarak birleştirme
     const data = [...incomingProducts, ...outgoingProducts];
@@ -341,7 +354,10 @@ router.post("/listTransactions", upload.none(), async (req, res) => {
 router.post("/outgoingProductdetail", upload.none(), async (req, res) => {
   try {
     const { outgoingProductId } = req.body;
-    const data = await OutgoingProduct.findById(outgoingProductId);
+    const data = await OutgoingProduct.findById(outgoingProductId).populate(
+      "products.product",
+      "productName productCode productDescription productQuantity"
+    );
     if (!data) {
       throw new Error("Ürün çıkışı bulunamadı");
     }

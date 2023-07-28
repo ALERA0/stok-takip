@@ -267,10 +267,13 @@ router.get("/getIncomingProducts", upload.none(), async (req, res) => {
 router.post("/incomingProductdetail", upload.none(), async (req, res) => {
   try {
     const { incomingProductId } = req.body;
-    const data = await IncomingProduct.findById(incomingProductId);
+    const data = await IncomingProduct.findById(incomingProductId)
+      .populate("products.product", "productName productCode productDescription productQuantity");
+
     if (!data) {
       throw new Error("Ürün girişi bulunamadı");
     }
+    
     res.status(200).json({
       status: "success",
       message: "Ürün giriş belgesi detayı başarıyla getirildi",
@@ -280,5 +283,6 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
+
 
 module.exports = router;
