@@ -268,7 +268,7 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
   try {
     const { incomingProductId } = req.body;
     const data = await IncomingProduct.findById(incomingProductId)
-      .populate("products.product", "productName productCode productDescription productQuantity");
+      .populate("products.product", "productName productCode productDescription productQuantity").populate("order", "_id isim");
 
     if (!data) {
       throw new Error("Ürün girişi bulunamadı");

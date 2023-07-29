@@ -357,7 +357,7 @@ router.post("/outgoingProductdetail", upload.none(), async (req, res) => {
     const data = await OutgoingProduct.findById(outgoingProductId).populate(
       "products.product",
       "productName productCode productDescription productQuantity"
-    );
+    ).populate("order", "_id isim");
     if (!data) {
       throw new Error("Ürün çıkışı bulunamadı");
     }
