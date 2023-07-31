@@ -75,53 +75,56 @@ router.post("/addProductToIncomingProduct", upload.none(), async (req, res) => {
 });
 
 // Gelen belgesindeki ürünlerin adedini güncelle
-router.post("/removeProduct", upload.none(), async (req, res) => {
-  try {
-    const { incomingProductId, rowId } = req.body;
+router.post(
+  "/updateIncomingProductQuantity",
+  upload.none(),
+  async (req, res) => {
+    try {
+      const { incomingProductId, rowId, newQuantity } = req.body;
 
-    // Mevcut ürün girişini bulma
-    const incomingProduct = await IncomingProduct.findById(incomingProductId);
-    if (!incomingProduct) {
-      throw new Error("Güncellenecek ürün girişi bulunamadı");
-    }
+      const data = await IncomingProduct.findById(incomingProductId);
+      if (!data) {
+        throw new Error("Güncellenecek ürün girişi bulunamadı");
+      }
 
-    // Çıkarılacak ürünü bul ve quantity değerini al
-    const productToRemove = incomingProduct.products.find(
-      (product) => product._id.toString() === rowId
-    );
+      const existingProduct = data.products.find(
+        (item) => item._id.toString() === rowId
+      );
+      if (!existingProduct) {
+        throw new Error("Ürün girişi bulunamadı");
+      }
 
-    if (!productToRemove) {
-      throw new Error("Çıkarılacak ürün listede bulunamadı");
-    }
+      const parsedNewQuantity = parseInt(newQuantity, 10);
+      if (isNaN(parsedNewQuantity) || parsedNewQuantity <= 0) {
+        throw new Error("Yeni quantity değeri geçerli bir sayı değil");
+      }
 
-    const removedQuantity = productToRemove.quantity;
+      // Eski quantity değerini bulup, farkını hesapla
+      const diffQuantity = parsedNewQuantity - existingProduct.quantity;
 
-    // Ürünleri _id değerine göre filtrele ve rowId değerine sahip olanı çıkar
-    incomingProduct.products = incomingProduct.products.filter(
-      (product) => product._id.toString() !== rowId
-    );
+      // IncomingProduct modelindeki quantity değerini güncelle
+      existingProduct.quantity = parsedNewQuantity;
 
-    // Çıkarılan ürünün quantity değerini Product modelinde azalt
-    const foundProduct = await Product.findById(productToRemove.product);
-    if (foundProduct) {
-      foundProduct.productQuantity -= removedQuantity;
+      // Product modelindeki quantity değerini güncelle
+      const foundProduct = await Product.findById(existingProduct.product);
+      if (!foundProduct) {
+        throw new Error("Ürün bulunamadı");
+      }
+      foundProduct.productQuantity += diffQuantity;
       await foundProduct.save();
-    } else {
-      throw new Error("Çıkarılacak ürünün veritabanında kaydı bulunamadı");
+
+      await data.save();
+
+      res.status(200).json({
+        status: "success",
+        message: "Ürün girişi başarıyla güncellendi.",
+        data,
+      });
+    } catch (error) {
+      res.status(500).json({ status: "error", message: error.message });
     }
-
-    // incomingProduct'i güncelle
-    await incomingProduct.save();
-
-    res.status(200).json({
-      status: "success",
-      message: "Ürün başarıyla çıkartıldı.",
-      incomingProduct,
-    });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: error.message });
   }
-});
+);
 
 // Girilen ürünleri güncelleme
 router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
@@ -200,12 +203,12 @@ router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
 //Girilen ürünler datasında bir ürün silme
 router.post("/removeProduct", upload.none(), async (req, res) => {
   try {
-    const { incomingProductId, rowId } = req.body;
+    const { incomingProductId,rowId  } = req.body;
 
     // Mevcut ürün girişini bulma
     const incomingProduct = await IncomingProduct.findById(incomingProductId);
     if (!incomingProduct) {
-      throw new Error("Güncellenecek ürün giriş belgesi bulunamadı");
+      throw new Error("Güncellenecek ürün girişi bulunamadı");
     }
 
     // Çıkarılacak ürünü bul ve quantity değerini al
@@ -219,13 +222,13 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
 
     const removedQuantity = productToRemove.quantity;
 
-    // Ürünleri _id değerine göre filtrele ve rowId değerine sahip olanı çıkar
+    // Ürünleri productId değerine göre filtrele ve productIdToRemove değerine sahip olanı çıkart
     incomingProduct.products = incomingProduct.products.filter(
       (product) => product._id.toString() !== rowId
     );
 
-    // Çıkarılan ürünün quantity değerini Product modelinde azalt
-    const foundProduct = await Product.findById(productToRemove.product);
+    // Çııııkarılan ürünün quantity değerini Product modelinde azalt
+    const foundProduct = await Product.findById(incomingProductId);
     if (foundProduct) {
       foundProduct.productQuantity -= removedQuantity;
       await foundProduct.save();
@@ -249,10 +252,7 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
 // Ürün giriş belgelerini getirme
 router.get("/getIncomingProducts", upload.none(), async (req, res) => {
   try {
-    const incomingProducts = await IncomingProduct.find().populate(
-      "order",
-      "_id isim"
-    );
+    const incomingProducts = await IncomingProduct.find().populate("order", "_id isim");
     res.status(200).json({
       status: "success",
       message: "Ürün girişleri listelendi.",
@@ -268,16 +268,12 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
   try {
     const { incomingProductId } = req.body;
     const data = await IncomingProduct.findById(incomingProductId)
-      .populate(
-        "products.product",
-        "productName productCode productDescription productQuantity"
-      )
-      .populate("order", "_id isim");
+      .populate("products.product", "productName productCode productDescription productQuantity").populate("order", "_id isim");
 
     if (!data) {
       throw new Error("Ürün girişi bulunamadı");
     }
-
+    
     res.status(200).json({
       status: "success",
       message: "Ürün giriş belgesi detayı başarıyla getirildi",
@@ -287,5 +283,6 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
+
 
 module.exports = router;
