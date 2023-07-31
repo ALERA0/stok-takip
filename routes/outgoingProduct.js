@@ -339,11 +339,15 @@ router.post("/listTransactions", upload.none(), async (req, res) => {
       .populate("order")
       .populate("products.product");
 
+      const data = [...incomingTransactions, ...outgoingTransactions];
+
+      // updatedAt alanına göre en güncelden eskiye sıralama
+      data.sort((a, b) => b.updatedAt - a.updatedAt);
+
     res.status(200).json({
       status: "success",
       message: "İşlemler başarıyla çekildi.",
-      incomingTransactions,
-      outgoingTransactions,
+      data,
     });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
