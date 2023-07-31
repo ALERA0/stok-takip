@@ -254,7 +254,7 @@ router.post("/removeOutgoingProduct", upload.none(), async (req, res) => {
 
     // Ürünleri productId değerine göre filtrele ve productIdToRemove değerine sahip olanı çıkart
     outgoingProduct.products = outgoingProduct.products.filter(
-      (product) => product.product.toString() !== rowId
+      (product) => product._id.toString() !== rowId
     );
 
     // Çıkarılan ürünün quantity değerini Product modelinde artır
