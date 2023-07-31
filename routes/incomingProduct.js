@@ -227,7 +227,7 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
       (product) => product._id.toString() !== rowId
     );
 
-    // Çıkarılan ürünün quantity değerini Product modelinde azalt
+    // Çııııkarılan ürünün quantity değerini Product modelinde azalt
     const foundProduct = await Product.findById(incomingProductId);
     if (foundProduct) {
       foundProduct.productQuantity -= removedQuantity;
