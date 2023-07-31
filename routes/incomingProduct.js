@@ -123,7 +123,6 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
   }
 });
 
-
 // Girilen ürünleri güncelleme
 router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
   try {
@@ -201,17 +200,17 @@ router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
 //Girilen ürünler datasında bir ürün silme
 router.post("/removeProduct", upload.none(), async (req, res) => {
   try {
-    const { _id, productIdToRemove } = req.body;
+    const { incomingProductId, rowId } = req.body;
 
     // Mevcut ürün girişini bulma
-    const incomingProduct = await IncomingProduct.findById(_id);
+    const incomingProduct = await IncomingProduct.findById(incomingProductId);
     if (!incomingProduct) {
-      throw new Error("Güncellenecek ürün girişi bulunamadı");
+      throw new Error("Güncellenecek ürün giriş belgesi bulunamadı");
     }
 
     // Çıkarılacak ürünü bul ve quantity değerini al
     const productToRemove = incomingProduct.products.find(
-      (product) => product.product.toString() === productIdToRemove
+      (product) => product._id.toString() === rowId
     );
 
     if (!productToRemove) {
@@ -220,13 +219,13 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
 
     const removedQuantity = productToRemove.quantity;
 
-    // Ürünleri productId değerine göre filtrele ve productIdToRemove değerine sahip olanı çıkart
+    // Ürünleri _id değerine göre filtrele ve rowId değerine sahip olanı çıkar
     incomingProduct.products = incomingProduct.products.filter(
-      (product) => product.product.toString() !== productIdToRemove
+      (product) => product._id.toString() !== rowId
     );
 
     // Çıkarılan ürünün quantity değerini Product modelinde azalt
-    const foundProduct = await Product.findById(productIdToRemove);
+    const foundProduct = await Product.findById(productToRemove.product);
     if (foundProduct) {
       foundProduct.productQuantity -= removedQuantity;
       await foundProduct.save();
@@ -250,7 +249,10 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
 // Ürün giriş belgelerini getirme
 router.get("/getIncomingProducts", upload.none(), async (req, res) => {
   try {
-    const incomingProducts = await IncomingProduct.find().populate("order", "_id isim");
+    const incomingProducts = await IncomingProduct.find().populate(
+      "order",
+      "_id isim"
+    );
     res.status(200).json({
       status: "success",
       message: "Ürün girişleri listelendi.",
@@ -266,12 +268,16 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
   try {
     const { incomingProductId } = req.body;
     const data = await IncomingProduct.findById(incomingProductId)
-      .populate("products.product", "productName productCode productDescription productQuantity").populate("order", "_id isim");
+      .populate(
+        "products.product",
+        "productName productCode productDescription productQuantity"
+      )
+      .populate("order", "_id isim");
 
     if (!data) {
       throw new Error("Ürün girişi bulunamadı");
     }
-    
+
     res.status(200).json({
       status: "success",
       message: "Ürün giriş belgesi detayı başarıyla getirildi",
@@ -281,6 +287,5 @@ router.post("/incomingProductdetail", upload.none(), async (req, res) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
-
 
 module.exports = router;

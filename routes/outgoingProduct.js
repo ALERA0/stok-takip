@@ -238,12 +238,12 @@ router.post("/removeOutgoingProduct", upload.none(), async (req, res) => {
     // Mevcut çıkan ürün girişini bulma
     const outgoingProduct = await OutgoingProduct.findById(outgoingProductId);
     if (!outgoingProduct) {
-      throw new Error("Güncellenecek  ürün çıkışı bulunamadı");
+      throw new Error("Güncellenecek  ürün çıkış belgesi bulunamadı");
     }
 
     // Çıkarılacak ürünü bul ve quantity değerini al
     const productToRemove = outgoingProduct.products.find(
-      (product) => product.product.toString() === rowId
+      (product) => product._id.toString() === rowId
     );
 
     if (!productToRemove) {
