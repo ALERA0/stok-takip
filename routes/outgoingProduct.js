@@ -168,13 +168,7 @@ router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
     }
 
     // Veri tiplerini kontrol etmek için forEach ile tüm ürünleri dönüyoruz
-    req.body.products.forEach((product) => {
-      const parsedQuantity = parseInt(product.productQuantity, 10);
-      if (isNaN(parsedQuantity)) {
-        throw new Error("productQuantity değeri geçerli bir sayı değil");
-      }
-      // ...
-    });
+   
 
     // Güncellenen ürünün quantity farkını hesapla
 
