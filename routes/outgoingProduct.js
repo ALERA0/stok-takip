@@ -159,8 +159,7 @@ router.post(
 // Çıkan ürünleri güncelleme
 router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
   try {
-    const { _id, documentDate, documentNumber, order, description, products } =
-      req.body;
+    const { _id, documentDate, documentNumber, order, description } = req.body;
 
     // Mevcut çıkan ürün girişini bulma
     const outgoingProduct = await OutgoingProduct.findById(_id);
@@ -177,41 +176,7 @@ router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
       // ...
     });
 
-    for (const product of products) {
-      const { productId, productQuantity } = product;
-      const foundProduct = await Product.findById(productId);
-
-      if (!foundProduct) {
-        throw new Error("Ürün bulunamadı");
-      }
-
-      // Güncellenen ürünün quantity farkını hesapla
-      const existingProduct = outgoingProduct.products.find(
-        (item) => item.product && item.product.toString() === productId
-      );
-
-      if (existingProduct) {
-        const parsedQuantity = parseInt(productQuantity, 10);
-        const diffQuantity = parsedQuantity - existingProduct.quantity;
-
-        // OutgoingProduct modelindeki quantity değerini güncelle
-        existingProduct.quantity = parsedQuantity;
-
-        // Product modelindeki quantity değerini güncelle
-        foundProduct.productQuantity -= diffQuantity;
-        await foundProduct.save();
-      } else {
-        // Yeni ürünleri güncellenen ürünler listesine ekle
-        outgoingProduct.products.push({
-          product: productId,
-          quantity: parseInt(productQuantity, 10),
-        });
-
-        // Product modelindeki quantity değerini güncelle
-        foundProduct.productQuantity -= parseInt(productQuantity, 10);
-        await foundProduct.save();
-      }
-    }
+    // Güncellenen ürünün quantity farkını hesapla
 
     outgoingProduct.documentDate = documentDate;
     outgoingProduct.documentNumber = documentNumber;
@@ -339,7 +304,7 @@ router.post("/listTransactions", upload.none(), async (req, res) => {
       .populate("order")
       .populate("products.product");
 
-      const data = [...incomingTransactions, ...outgoingTransactions];
+    const data = [...incomingTransactions, ...outgoingTransactions];
 
     res.status(200).json({
       status: "success",
@@ -355,10 +320,12 @@ router.post("/listTransactions", upload.none(), async (req, res) => {
 router.post("/outgoingProductdetail", upload.none(), async (req, res) => {
   try {
     const { outgoingProductId } = req.body;
-    const data = await OutgoingProduct.findById(outgoingProductId).populate(
-      "products.product",
-      "productName productCode productDescription productQuantity"
-    ).populate("order", "_id isim");
+    const data = await OutgoingProduct.findById(outgoingProductId)
+      .populate(
+        "products.product",
+        "productName productCode productDescription productQuantity"
+      )
+      .populate("order", "_id isim");
     if (!data) {
       throw new Error("Ürün çıkışı bulunamadı");
     }
