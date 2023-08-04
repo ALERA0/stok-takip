@@ -129,7 +129,7 @@ router.post(
 // Girilen ürünleri güncelleme
 router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
   try {
-    const { _id, documentDate, documentNumber, order, description, products } =
+    const { _id, documentDate, documentNumber, order, description } =
       req.body;
 
     // Mevcut ürün girişini bulma
@@ -138,50 +138,10 @@ router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
       throw new Error("Güncellenecek ürün girişi bulunamadı");
     }
 
-    // Veri tiplerini kontrol etmek için forEach ile tüm ürünleri dönüyoruz
-    req.body.products.forEach((product) => {
-      const parsedQuantity = parseInt(product.productQuantity, 10);
-      if (isNaN(parsedQuantity)) {
-        throw new Error("productQuantity değeri geçerli bir sayı değil");
-      }
-      // ...
-    });
 
-    for (const product of products) {
-      const { productId, productQuantity } = product;
-      const foundProduct = await Product.findById(productId);
 
-      if (!foundProduct) {
-        throw new Error("Ürün bulunamadı");
-      }
 
-      // Güncellenen ürünün quantity farkını hesapla
-      const existingProduct = incomingProduct.products.find(
-        (item) => item.product && item.product.toString() === productId
-      );
-
-      if (existingProduct) {
-        const parsedQuantity = parseInt(productQuantity, 10);
-        const diffQuantity = parsedQuantity - existingProduct.quantity;
-
-        // IncomingProduct modelindeki quantity değerini güncelle
-        existingProduct.quantity = parsedQuantity;
-
-        // Product modelindeki quantity değerini güncelle
-        foundProduct.productQuantity += diffQuantity;
-        await foundProduct.save();
-      } else {
-        // Yeni ürünleri güncellenen ürünler listesine ekle
-        incomingProduct.products.push({
-          product: productId,
-          quantity: parseInt(productQuantity, 10),
-        });
-
-        // Product modelindeki quantity değerini güncelle
-        foundProduct.productQuantity += parseInt(productQuantity, 10);
-        await foundProduct.save();
-      }
-    }
+   
 
     incomingProduct.documentDate = documentDate;
     incomingProduct.documentNumber = documentNumber;
