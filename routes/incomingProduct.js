@@ -188,7 +188,7 @@ router.post("/removeProduct", upload.none(), async (req, res) => {
     );
 
     // Çııııkarılan ürünün quantity değerini Product modelinde azalt
-    const foundProduct = await Product.findById(incomingProductId);
+    const foundProduct = await Product.findById(productToRemove.product);
     if (foundProduct) {
       foundProduct.productQuantity -= removedQuantity;
       await foundProduct.save();

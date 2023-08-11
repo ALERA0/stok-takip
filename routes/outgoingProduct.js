@@ -25,7 +25,7 @@ router.post("/addOutgoingProduct", upload.none(), async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "Ürün girişi başarıyla oluşturuldu.",
+      message: "Ürün çıkışı başarıyla oluşturuldu.",
       data,
     });
   } catch (error) {

@@ -5,6 +5,7 @@ const IncomingProductSchema = new mongoose.Schema(
     documentDate: {
       type: Date,
       default: Date.now,
+      required:false,
     },
     documentNumber: { type: String, required: true },
     order: {
