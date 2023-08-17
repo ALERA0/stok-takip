@@ -7,20 +7,17 @@ const upload = multer();
 //Yeni bir
 router.post("/newOrder", upload.none(), async (req, res) => {
   try {
-    const order = new Order(req.body);
-    const savedOrder = await order.save();
-    res
-      .status(201)
-      .json({ status: "success", message: "Cari oluşturuldu", savedOrder });
-  } catch (error) {
-    if (error.code === 11000) {
-      // Aynı tcNumber'ı içeren bir order zaten var.
-      res
-        .status(400)
-        .json({ status: "error", message: "Bu tcNumber zaten kullanımda." });
-    } else {
-      res.status(500).json({ status: "error", message: error });
+    const existingOrder = await Order.findOne({ tcNumber: req.body.tcNumber });
+    if (existingOrder) {
+      return res.status(400).json({ status: "error", message: "Bu tcNumber ile daha önce kayıt yapılmış." });
     }
+
+    const order = new Order(req.body);
+
+    const savedOrder = await order.save();
+    res.status(201).json({ status: "success", message: "Cari oluşturuldu", savedOrder });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error });
   }
 });
 
