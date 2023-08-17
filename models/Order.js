@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    tcNumber: { type: Number, required: true, length: 11 },
+    tcNumber: { type: Number, required: true, length: 11, unique: true },
     isim: { type: String, required: true },
     email: { type: String, required: true },
     telefon: { type: Number, required: true },

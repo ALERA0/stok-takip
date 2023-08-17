@@ -8,13 +8,19 @@ const upload = multer();
 router.post("/newOrder", upload.none(), async (req, res) => {
   try {
     const order = new Order(req.body);
-
     const savedOrder = await order.save();
     res
       .status(201)
-      .json({ status: "succes", message: "Cari oluşturuldu", savedOrder });
+      .json({ status: "success", message: "Cari oluşturuldu", savedOrder });
   } catch (error) {
-    res.status(500).json({ status: "error", message: error });
+    if (error.code === 11000) {
+      // Aynı tcNumber'ı içeren bir order zaten var.
+      res
+        .status(400)
+        .json({ status: "error", message: "Bu tcNumber zaten kullanımda." });
+    } else {
+      res.status(500).json({ status: "error", message: error });
+    }
   }
 });
 
@@ -71,13 +77,11 @@ router.post("/deleteOrder", upload.none(), async (req, res) => {
 router.get("/getTedarikciOrders", async (req, res) => {
   try {
     const orders = await Order.find({ ozellik: "Tedarikçi" });
-    res
-      .status(200)
-      .json({
-        status: "success",
-        message: "Tedarikçiler Başarıyla getirildi.",
-        orders,
-      });
+    res.status(200).json({
+      status: "success",
+      message: "Tedarikçiler Başarıyla getirildi.",
+      orders,
+    });
   } catch (error) {
     res.status(500).json({ status: "error", message: error });
   }
@@ -86,13 +90,11 @@ router.get("/getTedarikciOrders", async (req, res) => {
 router.get("/getMusteriOrders", async (req, res) => {
   try {
     const orders = await Order.find({ ozellik: "Müşteri" });
-    res
-      .status(200)
-      .json({
-        status: "success",
-        message: "Müşteriler Başarıyla getirildi.",
-        orders,
-      });
+    res.status(200).json({
+      status: "success",
+      message: "Müşteriler Başarıyla getirildi.",
+      orders,
+    });
   } catch (error) {
     res.status(500).json({ status: "error", message: error });
   }
