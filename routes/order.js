@@ -9,22 +9,32 @@ router.post("/newOrder", upload.none(), async (req, res) => {
   try {
     const existingOrder = await Order.findOne({ tcNumber: req.body.tcNumber });
     if (existingOrder) {
-      return res.status(400).json({ status: "error", message: "Bu tcNumber ile daha önce kayıt yapılmış." });
+      return res.status(400).json({
+        status: "error",
+        message: "Bu tcNumber ile daha önce kayıt yapılmış.",
+      });
     }
 
     const order = new Order(req.body);
 
     const savedOrder = await order.save();
-    res.status(201).json({ status: "success", message: "Cari oluşturuldu", savedOrder });
+    res
+      .status(201)
+      .json({ status: "success", message: "Cari oluşturuldu", savedOrder });
   } catch (error) {
     res.status(500).json({ status: "error", message: error });
   }
 });
 
 //Bütün carileri getiren endpoint
-router.get("/getlAllOrders", async (req, res) => {
+router.get("/getLAllOrders", async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find().lean();
+
+    orders.sort((a, b) => {
+      return a.isim.localeCompare(b.isim, "tr", { sensitivity: "base" });
+    });
+
     res.status(200).json({ status: "success", orders });
   } catch (error) {
     res.status(500).json({ status: "error", message: error });
@@ -73,7 +83,12 @@ router.post("/deleteOrder", upload.none(), async (req, res) => {
 
 router.get("/getTedarikciOrders", async (req, res) => {
   try {
-    const orders = await Order.find({ ozellik: "Tedarikçi" });
+    const orders = await Order.find({ ozellik: "Tedarikçi" }).lean();
+
+    orders.sort((a, b) => {
+      return a.isim.localeCompare(b.isim, "tr", { sensitivity: "base" });
+    });
+
     res.status(200).json({
       status: "success",
       message: "Tedarikçiler Başarıyla getirildi.",
@@ -86,7 +101,12 @@ router.get("/getTedarikciOrders", async (req, res) => {
 
 router.get("/getMusteriOrders", async (req, res) => {
   try {
-    const orders = await Order.find({ ozellik: "Müşteri" });
+    const orders = await Order.find({ ozellik: "Müşteri" }).lean();
+
+    orders.sort((a, b) => {
+      return a.isim.localeCompare(b.isim, "tr", { sensitivity: "base" });
+    });
+
     res.status(200).json({
       status: "success",
       message: "Müşteriler Başarıyla getirildi.",

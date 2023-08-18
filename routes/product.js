@@ -27,10 +27,10 @@ router.post("/addProduct", upload.none(), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      // productImage: {
-      //   data: req.file.buffer.toString("base64"),
-      //   contentType: req.file.mimetype,
-      // },
+      productImage: {
+        data: req.file.buffer.toString("base64"),
+        contentType: req.file.mimetype,
+      },
     });
 
     const products= await newProduct.save();
