@@ -7,15 +7,29 @@ const multer = require("multer");
 const Product = require("../models/Product.js");
 const upload = multer();
 const mongoose = require("mongoose");
+const Counter = require("../models/Counter.js");
 app.use(express.json());
+
+async function getNextSequenceValue(sequenceName) {
+  const sequenceDocument = await Counter.findByIdAndUpdate(
+    sequenceName,
+    { $inc: { sequence_value: 1 } },
+    { new: true, upsert: true }
+  );
+
+  return sequenceDocument.sequence_value;
+}
 
 // Çıkan ürünleri ekleme
 router.post("/addOutgoingProduct", upload.none(), async (req, res) => {
   try {
-    const { documentDate, documentNumber, order, description } = req.body;
+    const { documentDate, order, description } = req.body;
+
+    const sequenceValue = await getNextSequenceValue("documentNumber");
+
     const data = new OutgoingProduct({
       documentDate,
-      documentNumber,
+      documentNumber: sequenceValue.toString().padStart(5, "0"),
       order,
       description,
       products: [], // Ürünleri buraya tek tek eklemeyeceğiz, başka bir endpoint ile yapacağız
@@ -168,7 +182,6 @@ router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
     }
 
     // Veri tiplerini kontrol etmek için forEach ile tüm ürünleri dönüyoruz
-   
 
     // Güncellenen ürünün quantity farkını hesapla
 

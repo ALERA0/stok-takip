@@ -6,18 +6,55 @@ const multer = require("multer");
 const Product = require("../models/Product.js");
 const upload = multer();
 const mongoose = require("mongoose");
+const Counter = require("../models/Counter.js");
 app.use(express.json());
+
+
+async function getNextSequenceValue(sequenceName) {
+  const sequenceDocument = await Counter.findByIdAndUpdate(
+    sequenceName,
+    { $inc: { sequence_value: 1 } },
+    { new: true, upsert: true }
+  );
+
+  return sequenceDocument.sequence_value;
+}
+
+// Sıradaki belge dokuman numarasını getiren endpoint
+router.get("/getNextDocumentNumber", async (req, res) => {
+  try {
+    const sequenceDocument = await Counter.findById("documentNumber");
+
+    if (!sequenceDocument) {
+      // Eğer sayaç belirtilen ID ile bulunamazsa (ilk defa istek atılıyorsa)
+      // sayaç oluşturup değeri 1 olarak başlatın
+      const newSequenceDocument = new Counter({ _id: "documentNumber", sequence_value: 1 });
+      await newSequenceDocument.save();
+
+      res.status(200).json({ nextDocumentNumber: "00001" });
+    } else {
+      const nextDocumentNumber = (sequenceDocument.sequence_value + 1).toString().padStart(5, "0");
+      res.status(200).json({ nextDocumentNumber });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred while fetching the next document number." });
+  }
+});
+
 
 //Yeni bir gelen ürün belgesi ekleyen  endpoint
 router.post("/addIncomingProduct", upload.none(), async (req, res) => {
   try {
-    const { documentDate, documentNumber, order, description } = req.body;
+    const { documentDate, order, description } = req.body;
+
+    const sequenceValue = await getNextSequenceValue("documentNumber");
+
     const data = new IncomingProduct({
       documentDate,
-      documentNumber,
+      documentNumber: sequenceValue.toString().padStart(5, "0"), // Örneğin: 00001
       order,
       description,
-      products: [], // Ürünleri buraya tek tek eklemeyeceğiz, başka bir endpoint ile yapacağız
+      products: [],
     });
 
     await data.save();

@@ -7,7 +7,7 @@ const IncomingProductSchema = new mongoose.Schema(
       default: Date.now,
       required:false,
     },
-    documentNumber: { type: String, required: true },
+    documentNumber: { type: Number, required: true },
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
