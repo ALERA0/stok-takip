@@ -173,7 +173,7 @@ router.post(
 // Çıkan ürünleri güncelleme
 router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
   try {
-    const { _id, documentDate, documentNumber, order, description } = req.body;
+    const { _id, documentDate, order, description } = req.body;
 
     // Mevcut çıkan ürün girişini bulma
     const outgoingProduct = await OutgoingProduct.findById(_id);
@@ -186,7 +186,6 @@ router.post("/updateOutgoingProduct", upload.none(), async (req, res) => {
     // Güncellenen ürünün quantity farkını hesapla
 
     outgoingProduct.documentDate = documentDate;
-    outgoingProduct.documentNumber = documentNumber;
     outgoingProduct.order = order;
     outgoingProduct.description = description;
 

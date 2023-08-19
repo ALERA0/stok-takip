@@ -166,7 +166,7 @@ router.post(
 // Girilen ürünleri güncelleme
 router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
   try {
-    const { _id, documentDate, documentNumber, order, description } =
+    const { _id, documentDate, order, description } =
       req.body;
 
     // Mevcut ürün girişini bulma
@@ -181,7 +181,6 @@ router.post("/updateIncomingProduct", upload.none(), async (req, res) => {
    
 
     incomingProduct.documentDate = documentDate;
-    incomingProduct.documentNumber = documentNumber;
     incomingProduct.order = order;
     incomingProduct.description = description;
 
