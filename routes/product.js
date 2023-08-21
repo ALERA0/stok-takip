@@ -18,6 +18,16 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productBarcode,
       productAddress,
     } = req.body;
+
+    let productImage = {}; // Önce boş bir nesne oluşturuyoruz
+
+    if (req.file) {
+      productImage = {
+        data: req.file.buffer.toString("base64"),
+        contentType: req.file.mimetype,
+      };
+    }
+
     const newProduct = new Product({
       productCode,
       productName,
@@ -27,16 +37,11 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      productImage: {
-        data: req.file.buffer.toString("base64"),
-        contentType: req.file.mimetype,
-      },
+      productImage, // Oluşturduğumuz nesneyi burada kullanıyoruz
     });
 
-    const products= await newProduct.save();
-    res
-      .status(201)
-      .json({ status: "succes", message: "Ürün oluşturuldu", products });
+    const products = await newProduct.save();
+    res.status(201).json({ status: "success", message: "Ürün oluşturuldu", products });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
