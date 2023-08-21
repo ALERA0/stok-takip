@@ -6,7 +6,7 @@ const storage = multer.memoryStorage(); // Resmi bellekte geçici olarak saklama
 const upload = multer({ storage });
 
 // yeni ürün ekle
-router.post("/addProduct", upload.none(), async (req, res) => {
+router.post("/addProduct", upload.single("productImage"), async (req, res) => {
   try {
     const {
       productCode,
