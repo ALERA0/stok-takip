@@ -2,8 +2,17 @@ const Product = require("../models/Product.js");
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const storage = multer.memoryStorage(); // Resmi bellekte geçici olarak saklamak için memoryStorage kullanıyoruz.
-const upload = multer({ storage });
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "path/to/your/upload/directory");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
 
 // yeni ürün ekle
 router.post("/addProduct", upload.single("productImage"), async (req, res) => {
@@ -17,16 +26,9 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
+      productImage
     } = req.body;
 
-    let productImage = {}; // Önce boş bir nesne oluşturuyoruz
-
-    if (req.file) {
-      productImage = {
-        data: req.file.buffer.toString("base64"),
-        contentType: req.file.mimetype,
-      };
-    }
 
     const newProduct = new Product({
       productCode,
@@ -37,12 +39,15 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      productImage, // Oluşturduğumuz nesneyi burada kullanıyoruz
+      productImage // Use the filename or appropriate field here
     });
 
-    const products = await newProduct.save();
-    res.status(201).json({ status: "success", message: "Ürün oluşturuldu", products });
+    const product = await newProduct.save();
+    res
+      .status(201)
+      .json({ status: "success", message: "Ürün oluşturuldu", product });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ status: "error", message: error.message });
   }
 });
