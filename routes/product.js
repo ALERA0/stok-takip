@@ -17,16 +17,17 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      productImage, // This is the base64-encoded image
     } = req.body;
 
-    // Convert base64-encoded image to a Buffer
-    let productImageBuffer = null;
-    if (productImage) {
-      productImageBuffer = Buffer.from(productImage, 'base64');
+    let productImage = {}; // Önce boş bir nesne oluşturuyoruz
+
+    if (req.file) {
+      productImage = {
+        data: req.file.buffer.toString("base64"),
+        contentType: req.file.mimetype,
+      };
     }
 
-    // Create a new product instance
     const newProduct = new Product({
       productCode,
       productName,
@@ -36,13 +37,9 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      productImage: {
-        data: productImageBuffer,
-        contentType: 'image/jpeg', // Adjust the content type as needed
-      },
+      productImage, // Oluşturduğumuz nesneyi burada kullanıyoruz
     });
 
-    // Save the new product to the database
     const products = await newProduct.save();
     res.status(201).json({ status: "success", message: "Ürün oluşturuldu", products });
   } catch (error) {
