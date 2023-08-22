@@ -19,13 +19,10 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productAddress,
     } = req.body;
 
-    let productImage = {}; // Önce boş bir nesne oluşturuyoruz
+    let productImage = ""; // Dosya yolunu burada saklayacağız
 
     if (req.file) {
-      productImage = {
-        data: req.file.buffer.toString("base64"),
-        contentType: req.file.mimetype,
-      };
+      productImage = req.file.path; // Dosya yolunu alıyoruz
     }
 
     const newProduct = new Product({
@@ -37,7 +34,7 @@ router.post("/addProduct", upload.single("productImage"), async (req, res) => {
       productDescription,
       productBarcode,
       productAddress,
-      productImage, // Oluşturduğumuz nesneyi burada kullanıyoruz
+      productImage,
     });
 
     const products = await newProduct.save();
